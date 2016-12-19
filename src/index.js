@@ -1,11 +1,17 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import Fool from './fool';
-import axios from 'axios';
+'use strict';
 
-axios.get('/data/article-01.txt')
-.then(({ data }) => {
-    const results = new Fool(data);
-    console.debug('RESULTS', results);
-    ReactDOM.render(<div>{'hey'}</div>,document.getElementById('root'));
-});
+import 'babel-polyfill';
+import React from 'react';
+import { render } from 'react-dom';
+import { Provider } from 'react-redux';
+import { createStore } from 'redux';
+import configureStore from './stores';
+import Root from './containers/Root';
+
+const store = configureStore();
+render(
+    <Provider store={store}>
+        <Root />
+    </Provider>,
+    document.getElementById('root')
+)
