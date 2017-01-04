@@ -9,10 +9,14 @@
 */
 
 
-const sentence = 'Dois homens foram mortos na Avenida Brasil, na altura da Penha, Avenida Brasil, na pista em direção ao Centro da cidade.';
+const sentence = 'Dois homens foram mortos na Avenida Brasil, na altura da Penha, na pista em direção ao Centro da cidade.';
 // const sentence = 'Durante a ação criminosa, dois ônibus foram incendiados na Avenida Brasil, na altura da Penha, na pista em direção ao Centro da cidade.';
 
 const det = ['article', 'numeral', 'pronoun'];
+
+function intersect(a, b){
+    return a.find(i => !!b.find(j => j === i));
+}
 
 
 // const inArrayRecursive(toSearch, object){
@@ -43,31 +47,69 @@ const actionsSubjects = [
     'incendiados',
 ];
 
+const contextsMap = [
+    {
+        action: ['mortos', 'morte'],
+        subject: ['homens', 'mulheres'],
+        context: 'violence'
+    }
+]
+
 function build(sentence){
-    const results = [];
-    const defsMap = definitions.reduce((result, item) => {
-        const index = sentence.toLowerCase().indexOf(item.key);
-        console.log('index', index, item.key);
-        if (index) {
-            item.sentence_index = index;
-            // sentence = sentence.substr(0, index) +  + sentence.substr(0, item.key.length)
-            result.push(item);
+    let results = [];
+    sentence = sentence.toLowerCase();
+    console.warn(sentence);
+
+    // From definitions
+    (() => {
+        var matches = [];
+        definitions.forEach(item => {
+            const regex = new RegExp(item.key, 'g');
+            var match;
+            while (match = regex.exec(sentence)) {
+                matches.push(Object.assign({}, match, { item: item }));
+            }
+        });
+        if (matches.length) {
+            // filter matches that includes then selfs
+            for (var i = 0; i < matches.length; i++) {
+                for (var j = 0; j < matches.length; j++) {
+                    if ((matches[i] && matches[j]) && (matches[i][0] != matches[j][0] && matches[i][0].includes(matches[j][0]))) {
+                        delete matches[j];
+                    }
+                }
+            }
+            matches.forEach(match => {
+                var item = Object.assign({}, match.item);
+                const { index } = match;
+                item.sentence_index = index;
+                item.type = 'definition';
+                sentence = sentence.substr(0, index) + item.key.replace(/./g, 'X') + sentence.substr(index + item.key.length)
+                results.push(item);
+            })
         }
-        return result;
-    }, []);
+    })();
 
+    // From dictionary
+    (() => {
+        const regex = /(?!X+)[^"\s,.]+(?:".*"\S*)?/g; // match any word (w/ special characters) not X+
+        var match;
+        while (match = regex.exec(sentence)) {
+            let word = dicio.find(item => item.key == match[0]);
+            if (word) {
+                word = Object.assign({}, word);
+                const { index } = match;
+                word.sentence_index = index;
+                word.type = 'dictionary';
+                sentence = sentence.substr(0, index) + word.key.replace(/./g, 'X') + sentence.substr(index + word.key.length)
+                results.push(word);
+            }
+        }
+    })();
 
-
-    console.debug('HEY', defsMap, sentence);
-
-    let words = sentence
-    .replace(/[,.]/, '')
-    .split(' ')
-    .map((word, i) => find(word));
-
-    console.log(words);
-    words = words.map((word, i) => {
-        const fn = find(word);
+    results = results.sort((a,b) => a.sentence_index - b.sentence_index);
+    results = results.map((word, i) => {
+        const fn = Object.assign({}, word);
         if (!fn || fn.index) {
             return false;
         }
@@ -103,24 +145,15 @@ function build(sentence){
             if (typeof check === 'string') {
                 check = [check];
             }
-            console.debug('conpiled', compiled);
             checker = compiled.find(item => {
                 return item.index > this.index && !!check.find(c => item.data && item.data[c]);
             });
-
-            console.log(checker);
-
-            return checker;
-            checker = !!check.filter(i => i === this.key).length;
-            if (checker && callback) {
-                callback(this);
-            }
             return !callback ? checker : this;
         }
 
         Object.defineProperty(fn, 'next', { get: () => {
             const next = compiled.find(w => w.index === (i + 1));
-            if (next.data.prev_location || next.data.void) {
+            if (next && next.data.void) {
                 return next.next;
             }
             return next;
@@ -132,11 +165,7 @@ function build(sentence){
 
         return fn;
     });
-    return words;
-}
-
-function find(word){
-    return dicio.find(item => item.key == word.toLowerCase());
+    return results;
 }
 
 const compiled = build(sentence);
@@ -144,13 +173,38 @@ const compiled = build(sentence);
 function Brain(){
 
     const results = {
-        source: null,
+        input: null,
         context: null,
         subject: null,
-        location: [0,0],
-        relevance: [0,0],
-        reliability: [0,0],
+        location: {
+            value: null,
+            precision: 0
+        },
+        relevance: {
+            value: null,
+            precision: 0
+        },
+        reliability: {
+            value: null,
+            precision: 0
+        },
+        raw: {
+            subject: [],
+            action: [],
+        }
     };
+
+    function calcContext(subject, action){
+        let result = null;
+        contextsMap.forEach(context => {
+            if (intersect(context.subject, subject) && intersect(context.action, action)) {
+                result = context.context;
+            }
+        });
+        return result;
+    }
+
+    results.input = sentence;
 
     let cursor;
 
@@ -159,9 +213,12 @@ function Brain(){
         if (!subject)
         return;
 
+        results.subject = subject.key;
+        results.raw.subject.push(subject.key);
+
         if (subject.prev) {
             subject.prev.caseOf(det, word => {
-                results.subject = [word.key, subject.key].join(' ');
+                results.subject = word.key + ' ' + results.subject;
             });
         }
 
@@ -171,36 +228,39 @@ function Brain(){
             if (cursor.next && cursor.next.caseOfKey(actionsSubjects)) {
                 cursor = cursor.next;
                 results.subject += ' ' + cursor.key;
+                results.raw.action.push(cursor.key);
             }
         }
 
-        console.log('location', cursor.findByData(['location']));
+        const location = cursor.findByData(['location']);
+        if (location && location.prev.data['prev_location']) {
+            results.location.value = location.key;
+            cursor = location.next;
+            if (cursor && cursor.data['prev_location']) {
+                while (cursor && (cursor.data['prev_location'] || cursor.data['location'])) {
+                    results.location.value += ' ' + cursor.key;
+                    cursor = cursor.next;
+                }
+            }
+        }
 
-        // console.log(results);
+        if (cursor) {
+            // continue reading ...
+        }
     });
 
-    // compiled.forEach(word => {
-    //     word.caseOf(det, word => {
-    //         if (word.next.caseOf(['noun'])) {
-    //             // word =
-    //         }
-    //     });
-    //
-    //     word.caseOf(det, word => {
-    //         if (word.next.caseOf(['noun'])) {
-    //             // word =
-    //         }
-    //     });
-    //
-    // });
+    if (results.raw.subject.length && results.raw.action.length) {
+        results.context = calcContext(results.raw.subject, results.raw.action);
+    }
 
+    return results;
 }
 
 
 console.debug('TARGET', Brain(sentence));
 
 const expected = {
-    source: 'Dois homens foram mortos na Avenida Brasil, na altura da Penha, na pista em direção ao Centro da cidade.',
+    input: 'Dois homens foram mortos na Avenida Brasil, na altura da Penha, na pista em direção ao Centro da cidade.',
     context: 'violence',
     subject: 'dois homens foram mortos em avenida brasil',
     location: {

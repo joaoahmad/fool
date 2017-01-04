@@ -34675,13 +34675,41 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 exports.default = [{
-    key: 'na altura',
+    key: 'na altura da',
+    data: {
+        prev_location: true
+    }
+}, {
+    key: 'na altura do',
+    data: {
+        prev_location: true
+    }
+}, {
+    key: 'na pista sentido',
+    data: {
+        prev_location: true
+    }
+},
+// IDEA: use hash's
+// {
+//     key: 'na %{data.location}',
+//     data: {
+//         prev_location: true
+//     }
+// },
+{
+    key: 'na pista em direção a',
+    data: {
+        prev_location: true
+    }
+}, {
+    key: 'na pista em direção ao',
     data: {
         prev_location: true
     }
 }, {
     key: 'avenida brasil',
-    aka: ['av. brasil'],
+    variations: ['av. brasil'],
     data: {
         location: true,
         avenue: true,
@@ -34696,7 +34724,7 @@ exports.default = [{
     }
 }, {
     key: 'centro da cidade',
-    aka: ['centro do rio'],
+    variations: ['centro do rio'],
     data: {
         location: true,
         neighborhood: true,
@@ -34775,10 +34803,18 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 * 5. ?
 */
 
-var sentence = 'Dois homens foram mortos na Avenida Brasil, na altura da Penha, Avenida Brasil, na pista em direção ao Centro da cidade.';
+var sentence = 'Dois homens foram mortos na Avenida Brasil, na altura da Penha, na pista em direção ao Centro da cidade.';
 // const sentence = 'Durante a ação criminosa, dois ônibus foram incendiados na Avenida Brasil, na altura da Penha, na pista em direção ao Centro da cidade.';
 
 var det = ['article', 'numeral', 'pronoun'];
+
+function intersect(a, b) {
+    return a.find(function (i) {
+        return !!b.find(function (j) {
+            return j === i;
+        });
+    });
+}
 
 // const inArrayRecursive(toSearch, object){
 //     let results = false;
@@ -34796,28 +34832,74 @@ var subjects = ['onibus', 'homens', 'bandidos', 'assaltantes'];
 
 var actionsSubjects = ['mortos', 'incendiado', 'incendiados'];
 
+var contextsMap = [{
+    action: ['mortos', 'morte'],
+    subject: ['homens', 'mulheres'],
+    context: 'violence'
+}];
+
 function build(sentence) {
     var results = [];
-    var defsMap = _definitions2.default.reduce(function (result, item) {
-        var index = sentence.toLowerCase().indexOf(item.key);
-        console.log('index', index, item.key);
-        if (index) {
-            item.sentence_index = index;
-            // sentence = sentence.substr(0, index) +  + sentence.substr(0, item.key.length)
-            result.push(item);
+    sentence = sentence.toLowerCase();
+    console.warn(sentence);
+
+    // From definitions
+    (function () {
+        var matches = [];
+        _definitions2.default.forEach(function (item) {
+            var regex = new RegExp(item.key, 'g');
+            var match;
+            while (match = regex.exec(sentence)) {
+                matches.push(Object.assign({}, match, { item: item }));
+            }
+        });
+        if (matches.length) {
+            // filter matches that includes then selfs
+            for (var i = 0; i < matches.length; i++) {
+                for (var j = 0; j < matches.length; j++) {
+                    if (matches[i] && matches[j] && matches[i][0] != matches[j][0] && matches[i][0].includes(matches[j][0])) {
+                        delete matches[j];
+                    }
+                }
+            }
+            matches.forEach(function (match) {
+                var item = Object.assign({}, match.item);
+                var index = match.index;
+
+                item.sentence_index = index;
+                item.type = 'definition';
+                sentence = sentence.substr(0, index) + item.key.replace(/./g, 'X') + sentence.substr(index + item.key.length);
+                results.push(item);
+            });
         }
-        return result;
-    }, []);
+    })();
 
-    console.debug('HEY', defsMap, sentence);
+    // From dictionary
+    (function () {
+        var regex = /(?!X+)[^"\s,.]+(?:".*"\S*)?/g; // match any word (w/ special characters) not X+
+        var match;
+        while (match = regex.exec(sentence)) {
+            var word = _dicio2.default.find(function (item) {
+                return item.key == match[0];
+            });
+            if (word) {
+                word = Object.assign({}, word);
+                var _match = match,
+                    index = _match.index;
 
-    var words = sentence.replace(/[,.]/, '').split(' ').map(function (word, i) {
-        return find(word);
+                word.sentence_index = index;
+                word.type = 'dictionary';
+                sentence = sentence.substr(0, index) + word.key.replace(/./g, 'X') + sentence.substr(index + word.key.length);
+                results.push(word);
+            }
+        }
+    })();
+
+    results = results.sort(function (a, b) {
+        return a.sentence_index - b.sentence_index;
     });
-
-    console.log(words);
-    words = words.map(function (word, i) {
-        var fn = find(word);
+    results = results.map(function (word, i) {
+        var fn = Object.assign({}, word);
         if (!fn || fn.index) {
             return false;
         }
@@ -34869,22 +34951,11 @@ function build(sentence) {
             if (typeof check === 'string') {
                 check = [check];
             }
-            console.debug('conpiled', compiled);
             checker = compiled.find(function (item) {
                 return item.index > _this3.index && !!check.find(function (c) {
                     return item.data && item.data[c];
                 });
             });
-
-            console.log(checker);
-
-            return checker;
-            checker = !!check.filter(function (i) {
-                return i === _this3.key;
-            }).length;
-            if (checker && callback) {
-                callback(this);
-            }
             return !callback ? checker : this;
         };
 
@@ -34892,7 +34963,7 @@ function build(sentence) {
                 var next = compiled.find(function (w) {
                     return w.index === i + 1;
                 });
-                if (next.data.prev_location || next.data.void) {
+                if (next && next.data.void) {
                     return next.next;
                 }
                 return next;
@@ -34906,13 +34977,7 @@ function build(sentence) {
 
         return fn;
     });
-    return words;
-}
-
-function find(word) {
-    return _dicio2.default.find(function (item) {
-        return item.key == word.toLowerCase();
-    });
+    return results;
 }
 
 var compiled = build(sentence);
@@ -34920,13 +34985,38 @@ var compiled = build(sentence);
 function Brain() {
 
     var results = {
-        source: null,
+        input: null,
         context: null,
         subject: null,
-        location: [0, 0],
-        relevance: [0, 0],
-        reliability: [0, 0]
+        location: {
+            value: null,
+            precision: 0
+        },
+        relevance: {
+            value: null,
+            precision: 0
+        },
+        reliability: {
+            value: null,
+            precision: 0
+        },
+        raw: {
+            subject: [],
+            action: []
+        }
     };
+
+    function calcContext(subject, action) {
+        var result = null;
+        contextsMap.forEach(function (context) {
+            if (intersect(context.subject, subject) && intersect(context.action, action)) {
+                result = context.context;
+            }
+        });
+        return result;
+    }
+
+    results.input = sentence;
 
     var cursor = void 0;
 
@@ -34936,9 +35026,12 @@ function Brain() {
         });
         if (!subject) return;
 
+        results.subject = subject.key;
+        results.raw.subject.push(subject.key);
+
         if (subject.prev) {
             subject.prev.caseOf(det, function (word) {
-                results.subject = [word.key, subject.key].join(' ');
+                results.subject = word.key + ' ' + results.subject;
             });
         }
 
@@ -34948,34 +35041,38 @@ function Brain() {
             if (cursor.next && cursor.next.caseOfKey(actionsSubjects)) {
                 cursor = cursor.next;
                 results.subject += ' ' + cursor.key;
+                results.raw.action.push(cursor.key);
             }
         }
 
-        console.log('location', cursor.findByData(['location']));
+        var location = cursor.findByData(['location']);
+        if (location && location.prev.data['prev_location']) {
+            results.location.value = location.key;
+            cursor = location.next;
+            if (cursor && cursor.data['prev_location']) {
+                while (cursor && (cursor.data['prev_location'] || cursor.data['location'])) {
+                    results.location.value += ' ' + cursor.key;
+                    cursor = cursor.next;
+                }
+            }
+        }
 
-        // console.log(results);
+        if (cursor) {
+            // continue reading ...
+        }
     });
 
-    // compiled.forEach(word => {
-    //     word.caseOf(det, word => {
-    //         if (word.next.caseOf(['noun'])) {
-    //             // word =
-    //         }
-    //     });
-    //
-    //     word.caseOf(det, word => {
-    //         if (word.next.caseOf(['noun'])) {
-    //             // word =
-    //         }
-    //     });
-    //
-    // });
+    if (results.raw.subject.length && results.raw.action.length) {
+        results.context = calcContext(results.raw.subject, results.raw.action);
+    }
+
+    return results;
 }
 
 console.debug('TARGET', Brain(sentence));
 
 var expected = {
-    source: 'Dois homens foram mortos na Avenida Brasil, na altura da Penha, na pista em direção ao Centro da cidade.',
+    input: 'Dois homens foram mortos na Avenida Brasil, na altura da Penha, na pista em direção ao Centro da cidade.',
     context: 'violence',
     subject: 'dois homens foram mortos em avenida brasil',
     location: {
