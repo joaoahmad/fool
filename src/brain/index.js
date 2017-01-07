@@ -256,25 +256,4 @@ function Brain(){
     return results;
 }
 
-
-console.debug('TARGET', Brain(sentence));
-
-const expected = {
-    input: 'Dois homens foram mortos na Avenida Brasil, na altura da Penha, na pista em direção ao Centro da cidade.',
-    context: 'violence',
-    subject: 'dois homens foram mortos em avenida brasil',
-    location: {
-        value: 'Avenida Brasil - Penha - Sentido Centro da Cidade',
-        precision: 7
-    },
-    relevance: {
-        value: 8,
-        precision: 9
-    },
-    reliability: {
-        value: 9,
-        precision: 9
-    },
-}
-
 export default Brain;

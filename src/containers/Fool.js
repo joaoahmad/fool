@@ -1,5 +1,6 @@
 import React, { Component, PropTypes } from 'react';
-import Brain from '../brain';
+// import Brain from '../brain';
+import Brain from '../brain/Brain';
 
 // Brain();
 

@@ -1,11 +1,20 @@
 var express = require('express');
 var path = require("path");
+var logger = require('morgan');
+var cookieParser = require('cookie-parser');
+var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
-mongoose.connect('mongodb://joker:jp@ds113958.mlab.com:13958/fool');
+var config = require('./config');
+
+mongoose.connect(config.mongodb.host);
 mongoose.Promise = global.Promise;
 
 var app = express();
 
+app.use(logger('dev'));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(express.static(__dirname + '/../'));
 
 var api = require('./routes/api');

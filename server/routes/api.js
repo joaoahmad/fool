@@ -1,48 +1,30 @@
 var express = require('express');
 var router = express.Router();
-var request = require('request');
-var cheerio = require('cheerio')
 
 var mongoose = require('mongoose');
-var Word = require('../models/word');
+var terms = require('./api/terms');
+var subjects = require('./api/subjects');
+var actions = require('./api/actions');
+var contextMaps = require('./api/contextMaps');
+var words = require('./api/words');
 
-router.route('/word/:word')
-.get(function(req, res){
-    Word.findOne({ name: req.params.word },function(err, word) {
-        if(!word){
+router.route('/terms')
+.get(function(req, res){ terms.get(req, res) })
+.post(function(req, res){ terms.add(req, res) });
 
-            request('https://www.dicio.com.br/' + req.params.word, function (error, response, body) {
-                if (!error && response.statusCode == 200) {
+router.route('/subjects')
+.get(function(req, res){ subjects.get(req, res) })
+.post(function(req, res){ subjects.add(req, res) });
 
-                    try {
-                        var $ = cheerio.load(body);
-                        var type = $('.tit-significado').next('.significado').find('.cl:first-child').html()
-                        .replace('.', '');
-                    } catch (e) {
-                        console.log('INVALID TYPE ' + req.params.word);
-                        return res.send(null);
-                    }
-                    console.log('TYPE OK');
+router.route('/actions')
+.get(function(req, res){ actions.get(req, res) })
+.post(function(req, res){ actions.add(req, res) });
 
-                    word = new Word({
-                        name: req.params.word,
-                        type: type,
-                    });
+router.route('/context-maps')
+.get(function(req, res){ contextMaps.get(req, res) })
+.post(function(req, res){ contextMaps.add(req, res) });
 
-                    word.save(function(err){
-                        if (err) {
-                            res.send(err);
-                        }
-                        res.json(word);
-                    })
-                }
-            })
-        }else{
-            res.json(word);
-        }
-    })
-
-    // return res.json(req.params.word);
-});
+router.route('/words/:word')
+.get(function(req, res){ words.get(req, res) });
 
 module.exports = router;
