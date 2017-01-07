@@ -1,18 +1,26 @@
 import React, { Component, PropTypes } from 'react';
-// import Brain from '../brain';
-import Brain from '../brain/Brain';
+import when from 'when';
 
-// Brain();
+import Fool from '../brain/Fool';
+// import Brain from '../brain/Brain';
 
-class Fool extends Component{
+// const sentence = 'Dois suspeitos foram mortos durante uma troca de tiros na tarde desta terça feira, na localidade conhecida como Couro Come, próximo à Rua Almirante Alexandrino, em Santa Teresa, na região central do Rio. Segundo o comando da UPP Coroa/Fallet/Fogueteiro, uma viatura foi atacada pelos acusados, que estavam em uma moto, durante um patrulhamento de rotina. Houve troca de tiros e os suspeitos acabaram baleados e não resistiram.';
+const sentence = 'Dois homens foram mortos na Avenida Brasil, na altura da Penha, na pista em direção ao Centro da cidade.';
+const brain = new Fool(sentence);
 
-    static propTypes = {
-        hey: PropTypes.bool
-    }
-
+class FoolContainer extends Component{
     constructor(props) {
         super(props);
+        this.state = {
+            fetching: true,
+            results: []
+        }
         this.onSubmit = this.onSubmit.bind(this);
+    }
+
+    componentDidMount(){
+        when(brain.start())
+        .then(result => console.log('THEN', result))
     }
 
     onSubmit(){
@@ -20,20 +28,16 @@ class Fool extends Component{
     }
 
     render(){
-        return null;
         return (
             <div>
-                <textarea>
-                    <h1>23</h1>
-                </textarea>
-                <button onClick={this.onSubmit}>Enviar</button>
+                ...
             </div>
         )
     }
 }
 
 
-export default Fool;
+export default FoolContainer;
 
 
 
