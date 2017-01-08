@@ -2,6 +2,7 @@ import when, { promise } from 'when';
 import fn from 'when/function';
 import api from './api';
 import store from './store';
+import { intersect } from './helpers';
 import FoolBase from './FoolBase';
 import Word from './Word';
 import dicio from './_dicio';
@@ -27,6 +28,7 @@ class SentenceAnalyzer extends FoolBase {
         // analysis
         .then(this.analyzeSentenceSubjects.bind(this))
         .then(this.analyzeSentenceLocations.bind(this))
+        .then(this.analyzeSentenceContext.bind(this))
 
         .then(this.finishAnalysis.bind(this))
     }
@@ -106,6 +108,7 @@ class SentenceAnalyzer extends FoolBase {
 
         subjects.forEach(subject => {
             let cursor = store.words.find(item => item.key == subject.key);
+            console.log('SUBJECT', subject, cursor, store);
             if (!cursor)
             return;
 
@@ -156,11 +159,26 @@ class SentenceAnalyzer extends FoolBase {
     /**
     * search for known words definitions across the sentence
     */
+    analyzeSentenceContext(){
+        const { raw } = this.results;
+        if (raw.subject.length && raw.action.length) {
+            store.contextMaps.forEach(context => {
+               if (intersect(context.subject, raw.subject) && intersect(context.action, raw.action)) {
+                   this.results.context = context.context;
+               }
+           });
+        }
+    }
+
+    /**
+    * search for known words definitions across the sentence
+    */
     analysisSentenceByLocations(){
 
     }
 
     finishAnalysis(){
+        this.results.input = this.input;
         return this.results;
     }
 }

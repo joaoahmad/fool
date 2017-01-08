@@ -6,31 +6,47 @@ import Fool from '../brain/Fool';
 
 // const sentence = 'Dois suspeitos foram mortos durante uma troca de tiros na tarde desta terça feira, na localidade conhecida como Couro Come, próximo à Rua Almirante Alexandrino, em Santa Teresa, na região central do Rio. Segundo o comando da UPP Coroa/Fallet/Fogueteiro, uma viatura foi atacada pelos acusados, que estavam em uma moto, durante um patrulhamento de rotina. Houve troca de tiros e os suspeitos acabaram baleados e não resistiram.';
 const sentence = 'Dois homens foram mortos na Avenida Brasil, na altura da Penha, na pista em direção ao Centro da cidade.';
-const brain = new Fool(sentence);
 
 class FoolContainer extends Component{
     constructor(props) {
         super(props);
         this.state = {
-            fetching: true,
-            results: []
+            fetching: false,
+            input: 'Duas mulheres foram mortos na Avenida Brasil, na altura da Penha, na pista em direção ao Centro da cidade.',
+            results: null
         }
         this.onSubmit = this.onSubmit.bind(this);
+        this.onChange = this.onChange.bind(this);
     }
 
     componentDidMount(){
-        when(brain.start())
-        .then(result => console.log('THEN', result))
+
     }
 
     onSubmit(){
+        const { input, fetching, results } = this.state;
+        const brain = new Fool(input);
+        when(brain.start())
+        .then(results => {
+            this.setState({ results });
+        })
+    }
 
+    onChange(e){
+        this.setState({ input: e.target.value });
     }
 
     render(){
+        const { input, fetching, results } = this.state;
         return (
             <div>
-                ...
+                <div>
+                    <textarea defaultValue={input} onChange={this.onChange}></textarea>
+                    <button onClick={this.onSubmit} disabled={fetching}>Enviar</button>
+                </div>
+                <pre>
+                    {JSON.stringify(results, null, 2)}
+                </pre>
             </div>
         )
     }

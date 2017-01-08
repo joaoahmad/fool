@@ -1,5 +1,11 @@
 export default [
     {
+        key: 'duas',
+        data: {
+            numeral: 2
+        }
+    },
+    {
         key: 'dois',
         data: {
             numeral: 2
@@ -12,6 +18,15 @@ export default [
             male: true,
             noun: true,
             plural: 'homem',
+        }
+    },
+    {
+        key: 'mulheres',
+        data: {
+            human: true,
+            female: true,
+            noun: true,
+            plural: 'mulher',
         }
     },
     {

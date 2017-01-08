@@ -1,5 +1,6 @@
 import when, { promise } from 'when';
 import fn from 'when/function';
+import axios from 'axios';
 import api from './api';
 import store from './store';
 import FoolBase from './FoolBase';
@@ -21,6 +22,7 @@ class Fool extends FoolBase {
             this.fetchTerms(),
             this.fetchSubjects(),
             this.fetchActions(),
+            this.fetchContextMaps(),
         ]))
         .then(this.splitToSentences.bind(this))
         .then(this.analysisSentences.bind(this))
@@ -79,6 +81,14 @@ class Fool extends FoolBase {
     }
 
     /**
+    * fetch actions
+    */
+    fetchContextMaps(){
+        return api.get('/context-maps')
+        .then(response => store.contextMaps = response);
+    }
+
+    /**
     * analysis sentences
     */
     analysisSentences(){
@@ -89,8 +99,8 @@ class Fool extends FoolBase {
     * finish analysis
     */
     finishAnalysis(){
-        this.results = this.sentences[0].results;
-        return this.results;
+        return this.sentences[0].results;
+        // return this.results;
     }
 }
 

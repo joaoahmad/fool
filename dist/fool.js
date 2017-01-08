@@ -38826,6 +38826,8 @@ var _store = require('./store');
 
 var _store2 = _interopRequireDefault(_store);
 
+var _helpers = require('./helpers');
+
 var _FoolBase2 = require('./FoolBase');
 
 var _FoolBase3 = _interopRequireDefault(_FoolBase2);
@@ -38872,7 +38874,7 @@ var SentenceAnalyzer = function (_FoolBase) {
             .then(this.buildWords.bind(this))
 
             // analysis
-            .then(this.analyzeSentenceSubjects.bind(this)).then(this.analyzeSentenceLocations.bind(this)).then(this.finishAnalysis.bind(this));
+            .then(this.analyzeSentenceSubjects.bind(this)).then(this.analyzeSentenceLocations.bind(this)).then(this.analyzeSentenceContext.bind(this)).then(this.finishAnalysis.bind(this));
         }
 
         /**
@@ -38976,6 +38978,7 @@ var SentenceAnalyzer = function (_FoolBase) {
                 var cursor = _store2.default.words.find(function (item) {
                     return item.key == subject.key;
                 });
+                console.log('SUBJECT', subject, cursor, _store2.default);
                 if (!cursor) return;
 
                 _this3.results.subject = cursor.key;
@@ -39028,11 +39031,32 @@ var SentenceAnalyzer = function (_FoolBase) {
         */
 
     }, {
+        key: 'analyzeSentenceContext',
+        value: function analyzeSentenceContext() {
+            var _this4 = this;
+
+            var raw = this.results.raw;
+
+            if (raw.subject.length && raw.action.length) {
+                _store2.default.contextMaps.forEach(function (context) {
+                    if ((0, _helpers.intersect)(context.subject, raw.subject) && (0, _helpers.intersect)(context.action, raw.action)) {
+                        _this4.results.context = context.context;
+                    }
+                });
+            }
+        }
+
+        /**
+        * search for known words definitions across the sentence
+        */
+
+    }, {
         key: 'analysisSentenceByLocations',
         value: function analysisSentenceByLocations() {}
     }, {
         key: 'finishAnalysis',
         value: function finishAnalysis() {
+            this.results.input = this.input;
             return this.results;
         }
     }]);
@@ -39042,7 +39066,7 @@ var SentenceAnalyzer = function (_FoolBase) {
 
 exports.default = SentenceAnalyzer;
 
-},{"./FoolBase":556,"./Word":558,"./_dicio":559,"./api":560,"./store":562,"when":555,"when/function":536}],558:[function(require,module,exports){
+},{"./FoolBase":556,"./Word":558,"./_dicio":559,"./api":560,"./helpers":561,"./store":563,"when":555,"when/function":536}],558:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -39159,13 +39183,18 @@ var Word = function () {
 
 exports.default = Word;
 
-},{"./store":562}],559:[function(require,module,exports){
+},{"./store":563}],559:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
 exports.default = [{
+    key: 'duas',
+    data: {
+        numeral: 2
+    }
+}, {
     key: 'dois',
     data: {
         numeral: 2
@@ -39177,6 +39206,14 @@ exports.default = [{
         male: true,
         noun: true,
         plural: 'homem'
+    }
+}, {
+    key: 'mulheres',
+    data: {
+        human: true,
+        female: true,
+        noun: true,
+        plural: 'mulher'
     }
 }, {
     key: 'foram',
@@ -39268,6 +39305,21 @@ exports.default = {
 };
 
 },{"axios":1}],561:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.intersect = intersect;
+function intersect(a, b) {
+    return a.find(function (i) {
+        return !!b.find(function (j) {
+            return j === i;
+        });
+    });
+}
+
+},{}],562:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -39283,6 +39335,10 @@ var _when2 = _interopRequireDefault(_when);
 var _function = require('when/function');
 
 var _function2 = _interopRequireDefault(_function);
+
+var _axios = require('axios');
+
+var _axios2 = _interopRequireDefault(_axios);
 
 var _api = require('./api');
 
@@ -39333,7 +39389,7 @@ var Fool = function (_FoolBase) {
             var _this2 = this;
 
             return _function2.default.call(function () {
-                return _when2.default.all([_this2.fetchTerms(), _this2.fetchSubjects(), _this2.fetchActions()]);
+                return _when2.default.all([_this2.fetchTerms(), _this2.fetchSubjects(), _this2.fetchActions(), _this2.fetchContextMaps()]);
             }).then(this.splitToSentences.bind(this)).then(this.analysisSentences.bind(this)).then(this.finishAnalysis.bind(this));
         }
 
@@ -39403,6 +39459,18 @@ var Fool = function (_FoolBase) {
         }
 
         /**
+        * fetch actions
+        */
+
+    }, {
+        key: 'fetchContextMaps',
+        value: function fetchContextMaps() {
+            return _api2.default.get('/context-maps').then(function (response) {
+                return _store2.default.contextMaps = response;
+            });
+        }
+
+        /**
         * analysis sentences
         */
 
@@ -39421,8 +39489,8 @@ var Fool = function (_FoolBase) {
     }, {
         key: 'finishAnalysis',
         value: function finishAnalysis() {
-            this.results = this.sentences[0].results;
-            return this.results;
+            return this.sentences[0].results;
+            // return this.results;
         }
     }]);
 
@@ -39431,7 +39499,7 @@ var Fool = function (_FoolBase) {
 
 exports.default = Fool;
 
-},{"./FoolBase":556,"./SentenceAnalyzer":557,"./api":560,"./store":562,"when":555,"when/function":536}],562:[function(require,module,exports){
+},{"./FoolBase":556,"./SentenceAnalyzer":557,"./api":560,"./store":563,"axios":1,"when":555,"when/function":536}],563:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -39449,7 +39517,7 @@ var store = {
 
 exports.default = store;
 
-},{}],563:[function(require,module,exports){
+},{}],564:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -39457,7 +39525,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 var REQUEST_FOOL = exports.REQUEST_FOOL = 'REQUEST_FOOL';
 
-},{}],564:[function(require,module,exports){
+},{}],565:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -39490,7 +39558,6 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 // const sentence = 'Dois suspeitos foram mortos durante uma troca de tiros na tarde desta terça feira, na localidade conhecida como Couro Come, próximo à Rua Almirante Alexandrino, em Santa Teresa, na região central do Rio. Segundo o comando da UPP Coroa/Fallet/Fogueteiro, uma viatura foi atacada pelos acusados, que estavam em uma moto, durante um patrulhamento de rotina. Houve troca de tiros e os suspeitos acabaram baleados e não resistiram.';
 var sentence = 'Dois homens foram mortos na Avenida Brasil, na altura da Penha, na pista em direção ao Centro da cidade.';
-var brain = new _Fool2.default(sentence);
 
 var FoolContainer = function (_Component) {
     _inherits(FoolContainer, _Component);
@@ -39501,30 +39568,64 @@ var FoolContainer = function (_Component) {
         var _this = _possibleConstructorReturn(this, (FoolContainer.__proto__ || Object.getPrototypeOf(FoolContainer)).call(this, props));
 
         _this.state = {
-            fetching: true,
-            results: []
+            fetching: false,
+            input: 'Duas mulheres foram mortos na Avenida Brasil, na altura da Penha, na pista em direção ao Centro da cidade.',
+            results: null
         };
         _this.onSubmit = _this.onSubmit.bind(_this);
+        _this.onChange = _this.onChange.bind(_this);
         return _this;
     }
 
     _createClass(FoolContainer, [{
         key: 'componentDidMount',
-        value: function componentDidMount() {
-            (0, _when2.default)(brain.start()).then(function (result) {
-                return console.log('THEN', result);
+        value: function componentDidMount() {}
+    }, {
+        key: 'onSubmit',
+        value: function onSubmit() {
+            var _this2 = this;
+
+            var _state = this.state,
+                input = _state.input,
+                fetching = _state.fetching,
+                results = _state.results;
+
+            var brain = new _Fool2.default(input);
+            (0, _when2.default)(brain.start()).then(function (results) {
+                _this2.setState({ results: results });
             });
         }
     }, {
-        key: 'onSubmit',
-        value: function onSubmit() {}
+        key: 'onChange',
+        value: function onChange(e) {
+            this.setState({ input: e.target.value });
+        }
     }, {
         key: 'render',
         value: function render() {
+            var _state2 = this.state,
+                input = _state2.input,
+                fetching = _state2.fetching,
+                results = _state2.results;
+
             return _react2.default.createElement(
                 'div',
                 null,
-                '...'
+                _react2.default.createElement(
+                    'div',
+                    null,
+                    _react2.default.createElement('textarea', { defaultValue: input, onChange: this.onChange }),
+                    _react2.default.createElement(
+                        'button',
+                        { onClick: this.onSubmit, disabled: fetching },
+                        'Enviar'
+                    )
+                ),
+                _react2.default.createElement(
+                    'pre',
+                    null,
+                    JSON.stringify(results, null, 2)
+                )
             );
         }
     }]);
@@ -39626,7 +39727,7 @@ exports.default = FoolContainer;
 //
 // export default Fool;
 
-},{"../brain/Fool":561,"react":518,"when":555}],565:[function(require,module,exports){
+},{"../brain/Fool":562,"react":518,"when":555}],566:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -39676,7 +39777,7 @@ var Root = function (_Component) {
 
 exports.default = Root;
 
-},{"./Fool":564,"react":518}],566:[function(require,module,exports){
+},{"./Fool":565,"react":518}],567:[function(require,module,exports){
 'use strict';
 
 require('babel-polyfill');
@@ -39708,7 +39809,7 @@ var store = (0, _stores2.default)();
     _react2.default.createElement(_Root2.default, null)
 ), document.getElementById('root'));
 
-},{"./containers/Root":565,"./stores":569,"babel-polyfill":26,"react":518,"react-dom":360,"react-redux":489,"redux":530}],567:[function(require,module,exports){
+},{"./containers/Root":566,"./stores":570,"babel-polyfill":26,"react":518,"react-dom":360,"react-redux":489,"redux":530}],568:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -39750,7 +39851,7 @@ var fool = function fool() {
 
 exports.default = fool;
 
-},{"../constants":563,"immutable":346}],568:[function(require,module,exports){
+},{"../constants":564,"immutable":346}],569:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -39771,7 +39872,7 @@ var rootReducer = (0, _redux.combineReducers)({
 
 exports.default = rootReducer;
 
-},{"./fool":567,"redux":530}],569:[function(require,module,exports){
+},{"./fool":568,"redux":530}],570:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -39820,5 +39921,5 @@ function configureStore(initialState) {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../reducers":568,"redux":530,"redux-logger":523,"redux-thunk":524}]},{},[566])
+},{"../reducers":569,"redux":530,"redux-logger":523,"redux-thunk":524}]},{},[567])
 //# sourceMappingURL=fool.js.map

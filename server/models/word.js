@@ -2,8 +2,8 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var WordSchema = new Schema({
-    name: String,
-    type: String,
+    key: String,
+    data: Array,
 });
 
 module.exports = mongoose.model('Word', WordSchema);
