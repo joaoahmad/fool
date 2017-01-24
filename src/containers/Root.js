@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
-import Fool from './Fool';
+import Trainer from './Trainer';
 
 class Root extends Component{
     render(){
         return (
             <div>
-                <Fool />
+                <Trainer />
             </div>
         )
     }

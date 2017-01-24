@@ -7,7 +7,7 @@
     "test": "jest",
     "test:watch": "npm run test -- --watch",
     "start": "nodemon server/app.js & npm run build",
-    "build": "watchify src/index.js -v -o 'exorcist dist/fool.js.map > dist/fool.js' -t babelify -d"
+    "build": "watchify src/index.js -v -o 'exorcist public/scripts/fool.js.map > public/scripts/fool.js' -t babelify -p [css-modulesify --after autoprefixer --autoprefixer.browsers '> 5%' -o public/stylesheets/app.css] -d"
   },
   "repository": {
     "type": "git",
@@ -40,13 +40,15 @@
   "dependencies": {
     "babel-polyfill": "^6.16.0",
     "cheerio": "^0.22.0",
+    "classnames": "^2.2.5",
+    "draft-js": "^0.9.1",
     "immutable": "^3.8.1",
     "jQuery": "^1.7.4",
     "jsdom": "^9.8.3",
     "lodash": "^4.17.2",
     "q": "^1.4.1",
-    "react": "^15.4.1",
-    "react-dom": "^15.4.1",
+    "react": "^15.4.2",
+    "react-dom": "^15.4.2",
     "react-redux": "^4.4.6",
     "redux": "^3.6.0",
     "redux-logger": "^2.7.4",
