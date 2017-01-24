@@ -22,6 +22,7 @@ class Fool extends FoolBase {
             this.fetchTerms(),
             this.fetchSubjects(),
             this.fetchActions(),
+            this.fetchWords(),
             this.fetchContextMaps(),
         ]))
         .then(this.splitToSentences.bind(this))
@@ -78,6 +79,14 @@ class Fool extends FoolBase {
     fetchActions(){
         return api.get('/actions')
         .then(response => store.actions = response);
+    }
+
+    /**
+    * fetch words
+    */
+    fetchWords(){
+        return api.get('/words')
+        .then(response => store.words = response);
     }
 
     /**

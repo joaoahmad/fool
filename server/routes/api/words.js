@@ -4,26 +4,19 @@ var mongoose = require('mongoose');
 var Word = require('../../models/word');
 var priberam = require('../../dictionaries/priberam')
 
-module.exports.get = function(req, res) {
+module.exports.add = function(req, res) {
     Word.findOne({ name: req.params.word },function(err, word) {
         if(!word){
             priberam(req.params.word)
-            .then(function(response){
-                // console.log(response);
+            .then(function(result){
+                word = new Word(result);
+                word.save(function(err){
+                    if (err) {
+                        res.json({ err });
+                    }
+                    res.json(word);
+                })
 
-                // word = new Word({
-                //     name: response,
-                //     type: '',
-                // });
-
-                // word.save(function(err){
-                //     if (err) {
-                //         reject(err);
-                //     }
-                //     return resolve(word);
-                // })
-
-                res.send(response);
             }, function(err){
                 res.send(err);
                 // res.json({ err });
@@ -32,4 +25,13 @@ module.exports.get = function(req, res) {
             res.json(word);
         }
     })
+};
+
+module.exports.get = function(req, res) {
+    Word.find(function(err, words) {
+        if (err)
+        res.send(err);
+
+        res.json(words);
+    });
 };

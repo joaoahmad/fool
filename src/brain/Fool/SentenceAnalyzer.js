@@ -76,8 +76,20 @@ class SentenceAnalyzer extends FoolBase {
         const regex = /(?!X+)[^"\s,.]+(?:".*"\S*)?/g; // match any word (w/ special characters) not X+
         let match;
         while (match = regex.exec(this.sentence)) {
-            let word = dicio.find(item => item.key == match[0]);
-            if (word) {
+            let word = store.words.find(item => item.key == match[0]);
+
+            if (!word) {
+                console.log('not', match[0]);
+                api.post('/words/' + match[0])
+                .then(response => {
+                    word = Object.assign({}, response);
+                    const { index } = match;
+                    word.sentence_index = index;
+                    word.type = 'dictionary';
+                    this.sentence = this.sentence.substr(0, index) + word.key.replace(/./g, 'X') + this.sentence.substr(index + word.key.length)
+                    this.words.push(word);
+                });
+            }else{
                 word = Object.assign({}, word);
                 const { index } = match;
                 word.sentence_index = index;
@@ -105,6 +117,8 @@ class SentenceAnalyzer extends FoolBase {
     */
     analyzeSentenceSubjects(){
         const { subjects } = store;
+
+        console.log(store.words);
 
         subjects.forEach(subject => {
             let cursor = store.words.find(item => item.key == subject.key);

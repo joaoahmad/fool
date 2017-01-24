@@ -2,28 +2,12 @@ import React, { Component, PropTypes } from 'react';
 import when from 'when';
 import classnames from 'classnames';
 import uniqueId from 'lodash/uniqueId';
-import Draft, { Editor, EditorState, RichUtils } from 'draft-js';
-import Immutable from 'immutable';
 
 import Fool from '../brain/Fool';
 import styles from './styles.css';
 
-const sentence = 'Dois homens foram mortos na Avenida Brasil, na altura da Penha, na pista em direção ao Centro da cidade.';
-
-function getBlockStyle(block) {
-    switch (block.getType()) {
-        case 'blockquote': return 'RichEditor-blockquote';
-        default: return null;
-    }
-}
-
-function Block({ type, children }){
-    return (
-        <div className={styles['block-' + type]}>
-            {children}
-        </div>
-    )
-}
+const sentence = 'suspeito de envolvimento com a morte da menina Sofia Lara Braga, de 2 anos.';
+// const sentence = 'Dois homens foram mortos na Avenida Brasil, na altura da Penha, na pista em direção ao Centro da cidade.';
 
 class Trainer extends Component{
     constructor(props) {
@@ -33,7 +17,6 @@ class Trainer extends Component{
             input: sentence,
             results: null,
             selectionMode: 'subjects',
-            editorState: EditorState.createEmpty(),
             selections: {
                 subjects: [],
                 actions: [],
@@ -42,15 +25,9 @@ class Trainer extends Component{
             }
         }
         this.onSubmit = this.onSubmit.bind(this);
-        // this.onChange = this.onChange.bind(this);
+        this.onChange = this.onChange.bind(this);
         this.onSelect = this.onSelect.bind(this);
-        this.onChange = (editorState) => this.setState({editorState})
-        this.onRemoveResult = this.onRemoveResult.bind(this);
         this.onSelectionMode = this.onSelectionMode.bind(this);
-        this.handleKeyCommand = (command) => this._handleKeyCommand(command);
-        this.onTab = (e) => this._onTab(e);
-        this.toggleBlockType = (type) => this._toggleBlockType(type);
-        this.toggleInlineStyle = (style) => this._toggleInlineStyle(style);
     }
 
     componentDidMount(){
@@ -66,9 +43,9 @@ class Trainer extends Component{
         })
     }
 
-    // onChange(e){
-    //     this.setState({ input: e.target.value });
-    // }
+    onChange(e){
+        this.setState({ input: e.target.value });
+    }
 
     onSelect(e){
         const { selectionMode, selections } = this.state;
@@ -103,38 +80,6 @@ class Trainer extends Component{
         this.setState({ selections: newState });
     }
 
-    _handleKeyCommand(command) {
-        const {editorState} = this.state;
-        const newState = RichUtils.handleKeyCommand(editorState, command);
-        if (newState) {
-            this.onChange(newState);
-            return true;
-        }
-        return false;
-    }
-
-    _onTab(e) {
-        const maxDepth = 4;
-        this.onChange(RichUtils.onTab(e, this.state.editorState, maxDepth));
-    }
-
-    _toggleBlockType(blockType) {
-        this.onChange(
-            RichUtils.toggleBlockType(
-                this.state.editorState,
-                blockType
-            )
-        );
-    }
-
-    _toggleInlineStyle(inlineStyle) {
-        this.onChange(
-            RichUtils.toggleInlineStyle(
-                this.state.editorState,
-                inlineStyle
-            )
-        );
-    }
 
     renderSelection(target){
         const selections = this.state.selections[target];
@@ -164,22 +109,12 @@ render(){
         <div className={styles.container}>
             <p>Mode: {selectionMode}</p>
         <div className={styles.row}>
-            <div className={styles.editor}>
-                <InlineStyleControls
-                    editorState={editorState}
-                    onToggle={this.toggleInlineStyle}
-                />
-                <Editor
-                    blockStyleFn={getBlockStyle}
-                    editorState={editorState}
-                    placeholder="Tell a story..."
-                    customStyleMap={styleMap}
-                    handleKeyCommand={this.handleKeyCommand}
-                    onTab={this.onTab}
-                    ref="editor"
-                    spellCheck={true}
-                    onChange={this.onChange}
-                />
+            <div className={styles.input}>
+                <textarea onChange={this.onChange} className={styles.textarea} defaultValue={sentence}></textarea>
+            <button onClick={this.onSubmit} className={styles.button}>Analisar</button>
+            </div>
+            <div className={styles.input}>
+                {this.renderSelection('subjects')}
             </div>
         </div>
         <pre className={styles.output}>
@@ -189,91 +124,6 @@ render(){
 )
 }
 }
-
-// Custom overrides for "code" style.
-const styleMap = {
-    SUBJECT: {
-        backgroundColor: '#e04e9a',
-        color: '#fff'
-    },
-    ACTION: {
-        backgroundColor: '#cf66ff',
-        color: '#fff'
-    },
-    TERM: {
-        backgroundColor: '#538bff',
-        color: '#fff'
-    },
-    WORD: {
-        backgroundColor: '#68d52b',
-        color: '#fff'
-    },
-};
-
-class StyleButton extends React.Component {
-    constructor() {
-        super();
-        this.onToggle = (e) => {
-            e.preventDefault();
-            this.props.onToggle(this.props.style);
-        };
-    }
-
-    render() {
-        let className = 'RichEditor-styleButton';
-        if (this.props.active) {
-            className += ' RichEditor-activeButton';
-        }
-
-        return (
-            <span className={className} onMouseDown={this.onToggle}>
-                {this.props.label}
-            </span>
-        );
-    }
-}
-
-var INLINE_STYLES = [
-    {label: 'subject', style: 'SUBJECT'},
-    {label: 'action', style: 'ACTION'},
-    {label: 'terms', style: 'TERM'},
-    {label: 'words', style: 'WORD'},
-];
-
-// 'subject': {
-//     element: 'span',
-//     wrapper: <Block type='subject' />
-// },
-// 'action': {
-//     element: 'span',
-//     wrapper: <Block type='action' />
-// },
-// 'term': {
-//     element: 'span',
-//     wrapper: <Block type='term' />
-// },
-// 'word': {
-//     element: 'span',
-//     wrapper: <Block type='word' />
-// },
-
-const InlineStyleControls = (props) => {
-    var currentStyle = props.editorState.getCurrentInlineStyle();
-    return (
-        <div className="RichEditor-controls">
-            {INLINE_STYLES.map(type =>
-                <StyleButton
-                    key={type.label}
-                    active={currentStyle.has(type.style)}
-                    label={type.label}
-                    onToggle={props.onToggle}
-                    style={type.style}
-                />
-            )}
-        </div>
-    );
-};
-
 
 export default Trainer;
 

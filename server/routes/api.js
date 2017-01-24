@@ -24,7 +24,9 @@ router.route('/context-maps')
 .get(function(req, res){ contextMaps.get(req, res) })
 .post(function(req, res){ contextMaps.add(req, res) });
 
-router.route('/words/:word')
+router.route('/words')
 .get(function(req, res){ words.get(req, res) });
 
+router.route('/words/:word')
+.post(function(req, res){ words.add(req, res) });
 module.exports = router;
