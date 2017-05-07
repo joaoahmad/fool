@@ -1,13 +1,15 @@
 import React, { Component, PropTypes } from 'react';
 import when from 'when';
-import classnames from 'classnames';
 import uniqueId from 'lodash/uniqueId';
+import classNames from 'classnames/bind';
 
 import Fool from '../brain/Fool';
-import styles from './styles.css';
+import styles from './styles.scss';
+const cx = classNames.bind(styles);
 
-const sentence = 'suspeito de envolvimento com a morte da menina Sofia Lara Braga, de 2 anos.';
-// const sentence = 'Dois homens foram mortos na Avenida Brasil, na altura da Penha, na pista em direção ao Centro da cidade.';
+// const sentence = 'Em entrevista ao EXTRA, Klayne afirmou que os próprios traficantes a socorreram e que ela pediu para não ser morta.';
+// const sentence = 'suspeito de envolvimento com a morte da menina Sofia Lara Braga, de 2 anos.';
+const sentence = 'Dois homens foram mortos na Avenida Brasil, na altura da Penha, na pista em direção ao Centro da cidade.';
 
 class Trainer extends Component{
     constructor(props) {
@@ -83,15 +85,14 @@ class Trainer extends Component{
 
     renderSelection(target){
         const selections = this.state.selections[target];
-        const classes = classnames(styles.selections__wrap, styles['selections__' + target]);
         return (
-            <div className={classes}>
-                <div className={styles.selections__label} onClick={this.onSelectionMode.bind(null, target)}>{target}</div>
-            <div className={styles.selections__list}>
+            <div className={cx('selections__wrap', 'selections__' + target)}>
+                <div className={cx('selections__label')} onClick={this.onSelectionMode.bind(null, target)}>{target}</div>
+            <div className={cx('selections__list')}>
                 {selections.map((item, i) => {
                     return (
-                        <div className={styles.selections__item} key={i}>
-                            <div className={styles.selections__item__label} onClick={this.onRemoveResult.bind(null, target, item.id)}>{item.key}</div>
+                        <div className={cx('selections__item')} key={i}>
+                            <div className={cx('selections__item__label')} onClick={this.onRemoveResult.bind(null, target, item.id)}>{item.key}</div>
                         {/*<div className={styles.selections__item__action}>remover</div>*/}
                     </div>
                 )
@@ -106,18 +107,18 @@ render(){
 
 
     return (
-        <div className={styles.container}>
+        <div className={cx('container')}>
             <p>Mode: {selectionMode}</p>
-        <div className={styles.row}>
-            <div className={styles.input}>
-                <textarea onChange={this.onChange} className={styles.textarea} defaultValue={sentence}></textarea>
-            <button onClick={this.onSubmit} className={styles.button}>Analisar</button>
+        <div className={cx('row')}>
+            <div className={cx('input')}>
+                <textarea onChange={this.onChange} className={cx('textarea')} defaultValue={sentence}></textarea>
+            <button onClick={this.onSubmit} className={cx('button')}>Analisar</button>
             </div>
-            <div className={styles.input}>
+            <div className={cx('input')}>
                 {this.renderSelection('subjects')}
             </div>
         </div>
-        <pre className={styles.output}>
+        <pre className={cx('output')}>
             {JSON.stringify(results, null, 2)}
         </pre>
     </div>

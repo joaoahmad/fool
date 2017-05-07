@@ -5,7 +5,6 @@ import store from './store';
 import { intersect } from './helpers';
 import FoolBase from './FoolBase';
 import Word from './Word';
-import dicio from './_dicio';
 
 const det = ['article', 'numeral', 'pronoun'];
 
@@ -14,7 +13,6 @@ class SentenceAnalyzer extends FoolBase {
         super(sentence);
         this.sentence = sentence;
         this.words = [];
-        delete this.sentences;
     }
 
     start(){
@@ -34,7 +32,7 @@ class SentenceAnalyzer extends FoolBase {
     }
 
     /**
-    * search for known terms across the sentence
+    * search for known TERMS across the sentence
     */
     searchFirstLevel(){
         const { terms } = store;
@@ -70,17 +68,18 @@ class SentenceAnalyzer extends FoolBase {
     }
 
     /**
-    * search for known words definitions across the sentence
+    * search for known WORDS definitions across the sentence
     */
     searchSecondLevel(){
         const regex = /(?!X+)[^"\s,.]+(?:".*"\S*)?/g; // match any word (w/ special characters) not X+
-        let match;
-        while (match = regex.exec(this.sentence)) {
+        let _match;
+        const promises = [];
+        while (_match = regex.exec(this.sentence)) {
+            let match = _match;
             let word = store.words.find(item => item.key == match[0]);
 
             if (!word) {
-                console.log('not', match[0]);
-                api.post('/words/' + match[0])
+                const promise = api.post('/words/' + match[0])
                 .then(response => {
                     word = Object.assign({}, response);
                     const { index } = match;
@@ -89,6 +88,7 @@ class SentenceAnalyzer extends FoolBase {
                     this.sentence = this.sentence.substr(0, index) + word.key.replace(/./g, 'X') + this.sentence.substr(index + word.key.length)
                     this.words.push(word);
                 });
+                promises.push(promise);
             }else{
                 word = Object.assign({}, word);
                 const { index } = match;
@@ -98,6 +98,7 @@ class SentenceAnalyzer extends FoolBase {
                 this.words.push(word);
             }
         }
+        return when.all(promises);
     }
 
     /**
@@ -118,11 +119,8 @@ class SentenceAnalyzer extends FoolBase {
     analyzeSentenceSubjects(){
         const { subjects } = store;
 
-        console.log(store.words);
-
         subjects.forEach(subject => {
             let cursor = store.words.find(item => item.key == subject.key);
-            console.log('SUBJECT', subject, cursor, store);
             if (!cursor)
             return;
 
@@ -146,7 +144,7 @@ class SentenceAnalyzer extends FoolBase {
             }
 
             const location = cursor.findByData(['location']);
-            if (location && location.prev.data['prev_location']) {
+            if (location) {
                 this.results.location.value = location.key;
                 cursor = location.next;
                 if (cursor && cursor.data['prev_location']) {
@@ -193,6 +191,7 @@ class SentenceAnalyzer extends FoolBase {
 
     finishAnalysis(){
         this.results.input = this.input;
+        console.warn('result', this.results);
         return this.results;
     }
 }

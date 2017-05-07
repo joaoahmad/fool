@@ -5,7 +5,7 @@ var Word = require('../../models/word');
 var priberam = require('../../dictionaries/priberam')
 
 module.exports.add = function(req, res) {
-    Word.findOne({ name: req.params.word },function(err, word) {
+    Word.findOne({ key: req.params.word },function(err, word) {
         if(!word){
             priberam(req.params.word)
             .then(function(result){
@@ -18,8 +18,9 @@ module.exports.add = function(req, res) {
                 })
 
             }, function(err){
-                res.send(err);
-                // res.json({ err });
+                res.send({
+                    error: err
+                });
             })
         }else{
             res.json(word);

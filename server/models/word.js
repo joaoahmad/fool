@@ -3,7 +3,7 @@ var Schema = mongoose.Schema;
 
 var WordSchema = new Schema({
     key: String,
-    data: Array,
+    data: Schema.Types.Mixed,
 });
 
 module.exports = mongoose.model('Word', WordSchema);
