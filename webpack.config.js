@@ -114,5 +114,9 @@ webpackConfig.module.rules.push({
         'postcss-loader'
     ]
 })
+webpackConfig.module.rules.push({
+    test: /\.txt$/,
+    use: 'raw-loader'
+})
 
 module.exports = webpackConfig
