@@ -4,8 +4,7 @@ var mongoose = require('mongoose');
 var Term = require('../../models/term');
 
 module.exports.add = function(req, res) {
-    var term = new Term(req.body);
-    term.save(function(err) {
+    Term.findOneOrCreate({ key: req.body.key }, req.body, function(err, term) {
         if (err)
         res.send(err);
 

@@ -4,8 +4,7 @@ var mongoose = require('mongoose');
 var Action = require('../../models/action');
 
 module.exports.add = function(req, res) {
-    var action = new Action(req.body);
-    action.save(function(err) {
+    Action.findOneOrCreate({ key: req.body.key }, req.body, function(err, action) {
         if (err)
         res.send(err);
 

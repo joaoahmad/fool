@@ -1,5 +1,6 @@
 var request = require('request');
 var cheerio = require('cheerio');
+var porExtenso = require('../porExtenso');
 // 'https://www.priberam.pt/DLPO/' + word
 var priberam = function(word){
     var options = {
@@ -32,7 +33,7 @@ var priberam = function(word){
                     var descriptions = resultados.find('Categoria_ext_aAO');
                     descriptions = descriptions.each(function(i, element){
                         element = $(element);
-                        var string = element.html().split(' ')[0].trim().toLowerCase();
+                        var string = element.html().toLowerCase();
                         var title = element.parents('.varpt')
                         .parent()
                         .find('> .varpb > span')
@@ -40,19 +41,32 @@ var priberam = function(word){
                         .toLowerCase()
                         .replace(/[^a-z]/, '');
 
-                        if (string === 'substantivo') {
+                        if (string.indexOf('substantivo') !== -1) {
                             result.data.noun = true;
                         }
-                        if (string === 'verbo') {
+                        if (string.indexOf('verbo') !== -1) {
                             if (!result.data.verb) {
                                 result.data.verb = {};
                             }
                             result.data.verb[title] = true;
                         }
-                        if (string === 'feminino') {
+                        if (string.indexOf('adjetivo') !== -1) {
+                            if (!result.data.adjective) {
+                                result.data.adjective = {};
+                            }
+                            result.data.adjective[title] = true;
+                        }
+                        if (string.indexOf('numeral') !== -1) {
+                            var number = porExtenso.resolve(title);
+                            result.data.numeral = number || true;
+                        }
+                        if (string.indexOf('pronome') !== -1) {
+                            result.data.pronoun = true;
+                        }
+                        if (string.indexOf('feminino') !== -1) {
                             result.data.female = true;
                         }
-                        if (string === 'masculino') {
+                        if (string.indexOf('masculino') !== -1) {
                             result.data.male = true;
                         }
                     });

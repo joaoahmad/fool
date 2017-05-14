@@ -7,31 +7,35 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const debug = require('debug')('app:config:webpack');
 
 const webpackConfig = {
-    name    : 'client',
-    target  : 'web',
-    devtool : 'source-map',
-    resolve : {
-        extensions : ['.js', '.jsx', '.json'],
-        modules: [path.resolve(__dirname, 'src'), "node_modules"],
-    },
-    module : {}
+  name    : 'client',
+  target  : 'web',
+  devtool : 'source-map',
+  resolve : {
+    extensions : ['.js', '.jsx', '.json'],
+    modules: [path.resolve(__dirname, 'src'), "node_modules"],
+  },
+  module : {}
 };
 
 webpackConfig.entry = {
-    fool : [path.resolve(__dirname, 'src', 'index.js'), 'webpack-hot-middleware/client?path=/__webpack_hmr'],
-    vendor : [
-        'react',
-        'react-dom'
-    ]
+  fool : [
+    'react-hot-loader/patch',
+    'webpack-hot-middleware/client?reload=true',
+    path.resolve(__dirname, 'src', 'index.js'),
+  ],
+  vendor : [
+    'react',
+    'react-dom'
+  ]
 }
 
 // ------------------------------------
 // Bundle Output
 // ------------------------------------
 webpackConfig.output = {
-    filename   : `[name].[hash].js`,
-    path       : path.resolve(__dirname, 'public'),
-    publicPath : '/'
+  filename   : `[name].[hash].js`,
+  path       : path.resolve(__dirname, 'public'),
+  publicPath : '/'
 }
 
 // ------------------------------------
@@ -46,24 +50,21 @@ webpackConfig.externals['react/addons'] = true
 // Plugins
 // ------------------------------------
 webpackConfig.plugins = [
-    new HtmlWebpackPlugin({
-        template : path.resolve(__dirname, 'src', 'index.html'),
-        hash     : false,
-        filename : 'index.html',
-        inject   : 'body',
-        minify   : {
-            collapseWhitespace : true
-        }
-    }),
-    // new webpack.ProvidePlugin({
-    //     cx: "classnames",
-    // })
+  new HtmlWebpackPlugin({
+    template : path.resolve(__dirname, 'src', 'index.html'),
+    hash     : false,
+    filename : 'index.html',
+    inject   : 'body',
+    minify   : {
+      collapseWhitespace : true
+    }
+  }),
 ]
 
 debug('Enabling plugins for live development (HMR, NoErrors).')
 webpackConfig.plugins.push(
-    new webpack.HotModuleReplacementPlugin(),
-    new webpack.NoEmitOnErrorsPlugin()
+  new webpack.HotModuleReplacementPlugin(),
+  new webpack.NoEmitOnErrorsPlugin()
 )
 
 // ------------------------------------
@@ -71,52 +72,50 @@ webpackConfig.plugins.push(
 // ------------------------------------
 webpackConfig.module.rules = [];
 webpackConfig.module.rules.push({
-    test    : /\.(js|jsx)$/,
-    exclude : [/node_modules/],
-    loader  : 'babel-loader',
-    query   : {
-        cacheDirectory : false,
-        presets        : ['es2015', 'react', 'stage-0'],
-        plugins        : [
-            'transform-react-jsx',
-        ],
+  test    : /\.(js|jsx)$/,
+  exclude : [/node_modules/],
+  loader  : 'babel-loader',
+  query   : {
+    cacheDirectory : true,
+    presets        : ['es2015', 'react', 'stage-0'],
+    // plugins        : ["react-hot-loader/babel"]
+  }
+})
+webpackConfig.module.rules.push({
+  test   : /\.json$/,
+  loader : 'json-loader'
+})
+webpackConfig.module.rules.push({
+  test: /\.scss$/,
+  use: [
+    'style-loader',
+    {
+      loader: 'css-loader',
+      query: {
+        sourceMap: true,
+        modules: true,
+        localIdentName: '[local]__[hash:base64:3]'
+      }
+    },
+    'postcss-loader',
+    {
+      loader: 'sass-loader',
+      options: {
+        sourceMap: true,
+      }
     }
+  ]
 })
 webpackConfig.module.rules.push({
-    test   : /\.json$/,
-    loader : 'json-loader'
+  test: /\.css$/,
+  use: [
+    'css-loader',
+    'postcss-loader'
+  ]
 })
 webpackConfig.module.rules.push({
-    test: /\.scss$/,
-    use: [
-        'style-loader',
-        {
-            loader: 'css-loader',
-            query: {
-                sourceMap: true,
-                modules: true,
-                localIdentName: '[local]__[hash:base64:3]'
-            }
-        },
-        'postcss-loader',
-        {
-            loader: 'sass-loader',
-            options: {
-                sourceMap: true,
-            }
-        }
-    ]
-})
-webpackConfig.module.rules.push({
-    test: /\.css$/,
-    use: [
-        'css-loader',
-        'postcss-loader'
-    ]
-})
-webpackConfig.module.rules.push({
-    test: /\.txt$/,
-    use: 'raw-loader'
+  test: /\.txt$/,
+  use: 'raw-loader'
 })
 
 module.exports = webpackConfig

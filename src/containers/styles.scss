@@ -1,98 +1,57 @@
 .container{
-    margin: 50px auto 0;
-    max-width: 1000px;
+  margin: 50px auto 0;
+  max-width: 600px;
 }
 
 .row{
-    display: flex;
+  display: flex;
+  margin: 0 0 10px;
+
+  &-vertical{
+    flex-direction: column;
+  }
 }
 
 .input{
-    flex: 0 0 60%;
-}
-
-.selections{
-    margin: 0 0 0 20px;
-}
-
-.selections__wrap{
-    margin: 0 0 10px;
-}
-
-.selections__label{
-    display: inline-block;
-    font-size: 14px;
-    padding: 6px 10px;
-    background: #f1f1f1;
-    border-radius: 2px;
-    margin: 4px 0;
-    cursor: pointer;
-}
-.selections__list{
-    display: flex;
-}
-.selections__item{
-    display: flex;
-    margin: 0 8px 8px 0;
-    padding: 4px;
-}
-
-.selections__item__label{
-
-}
-
-.selections__subjects .selections__label,
-.selections__subjects .selections__item{
-    background: #e04e9a;
-    color: #fff;
-}
-
-.selections__actions .selections__label,
-.selections__actions .selections__item{
-    background: #cf66ff;
-    color: #fff;
-}
-
-.selections__terms .selections__label,
-.selections__terms .selections__item{
-    background: #538bff;
-    color: #fff;
-}
-
-.selections__words .selections__label,
-.selections__words .selections__item{
-    background: #68d52b;
-    color: #fff;
+  width: 100%;
+  border: solid 1px #d5d5d7;
+  line-height: 32px;
+  padding: 0 10px;
 }
 
 .output{
-    margin: 50px auto 0;
+  margin: 50px auto 0;
 
 }
 
 .textarea{
-    border: solid 1px #f1f1f1;
-    padding: 20px 20px;
-    font-size: 16px;
-    resize: vertical;
-    width: 100%;
-    margin: 0 0 20px;
+  @extend .input;
+  height: 100px;
+  padding: 20px 20px;
+  font-size: 16px;
+  line-height: 1.2;
+  resize: vertical;
 }
 
 .textarea:focus{
-    border-color: #f1f1f1;
-    box-shadow: none;
-    outline: 0;
+  border-color: #f1f1f1;
+  box-shadow: none;
+  outline: 0;
 }
 
 .button{
-    display: block;
-    /*width: 100%;*/
-    padding: 8px 16px;
-    font-size: 14px;
-    border: none;
-    background: #f2f3f4;
-    color: #40444e;
-    font-weight: 600;
-    border: solid 1px #d7dde8;
+  display: block;
+  /*width: 100%;*/
+  padding: 8px 16px;
+  font-size: 14px;
+  border: none;
+  background: #f2f3f4;
+  color: #40444e;
+  font-weight: 600;
+  border: solid 1px #d7dde8;
+  cursor: pointer;
+
+  &[disabled]{
+    cursor: wait;
+  }
 }
