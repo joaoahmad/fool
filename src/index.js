@@ -1,7 +1,6 @@
 /* eslint-disable */
 import React from 'react';
 import ReactDOM from 'react-dom';
-// import RedBox from 'redbox-react';
 import { Provider } from 'react-redux';
 import configureStore from './stores';
 import { AppContainer } from 'react-hot-loader';
@@ -17,7 +16,7 @@ const MOUNT_NODE = document.getElementById('root');
 let render = () => {
   ReactDOM.render((
     <AppContainer>
-      <Root />
+      <Root store={store} />
     </AppContainer>
   ), MOUNT_NODE);
 };
